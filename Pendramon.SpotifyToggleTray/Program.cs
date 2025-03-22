@@ -10,8 +10,8 @@ if (TryGetSpotifyWindowHandle(out var spotifyWindowHandle))
 }
 else
 {
-    // Hacky way to bring spotify up from background without messing with its inner state.
     var spotifyPath = GetSpotifyPath();
+    // Also a hacky way to bring spotify window up from the background without messing with its inner state.
     StartSpotify(spotifyPath);
 }
 
