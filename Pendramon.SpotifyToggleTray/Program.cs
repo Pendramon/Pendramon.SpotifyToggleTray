@@ -5,7 +5,7 @@ const int swHide = 0;
 const int swRestore = 9;
 
 var spotifyProcess = Process.GetProcessesByName("Spotify").FirstOrDefault();
-var spotifyPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Spotify\Spotify.exe";
+var spotifyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"Spotify\Spotify.exe");
 
 /*
  * Launch spotify if it's not started and also brings window up if it's hidden.
