@@ -4,39 +4,60 @@ using System.Runtime.InteropServices;
 const int swHide = 0;
 const int swRestore = 9;
 
-var spotifyProcess = Process.GetProcessesByName("Spotify").FirstOrDefault();
-var spotifyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"Spotify\Spotify.exe");
-
-/*
- * Launch spotify if it's not started and also brings window up if it's hidden.
- * Hacky way to bring spotify out of the tray without messing up its inner state.
-*/
-if (spotifyProcess is null || spotifyProcess.MainWindowHandle == IntPtr.Zero)
+if (TryGetSpotifyWindowHandle(out var spotifyWindowHandle))
 {
-    var spotify = new Process()
-    {
-        StartInfo = new ProcessStartInfo(spotifyPath),
-    };
-    spotify.Start();
-    return;
+    ToggleSpotifyWindow(spotifyWindowHandle);
 }
-
-// Makes the spotify window focused or hidden if it already is focused.
-if (GetForegroundWindow() == spotifyProcess.MainWindowHandle)
+else
 {
-    ShowWindow(spotifyProcess.MainWindowHandle, swHide);
-} else {
-    ShowWindow(spotifyProcess.MainWindowHandle, swRestore);
-    SetForegroundWindow(spotifyProcess.MainWindowHandle);
+    // Hacky way to bring spotify up from background without messing with its inner state.
+    var spotifyPath = GetSpotifyPath();
+    StartSpotify(spotifyPath);
 }
 
 return;
 
-[DllImport("user32.dll")]
-static extern IntPtr GetForegroundWindow();
+bool TryGetSpotifyWindowHandle(out nint windowHandle)
+{
+    var spotifyProcess = Process.GetProcessesByName("Spotify")
+        .FirstOrDefault(p => p.MainWindowHandle != nint.Zero);
+
+    windowHandle = spotifyProcess?.MainWindowHandle ?? nint.Zero;
+    return windowHandle != nint.Zero;
+}
+
+string GetSpotifyPath()
+{
+    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spotify", "Spotify.exe");
+}
+
+void StartSpotify(string path)
+{
+    var spotify = new Process
+    {
+        StartInfo = new ProcessStartInfo(path)
+    };
+    spotify.Start();
+}
+
+// Toggles the Spotify window visibility: hides or restores based on its current state
+void ToggleSpotifyWindow(nint windowHandle)
+{
+    if (GetForegroundWindow() == windowHandle)
+    {
+        ShowWindow(windowHandle, swHide);
+    } else {
+        ShowWindow(windowHandle, swRestore);
+        SetForegroundWindow(windowHandle);
+    }
+}
 
 [DllImport("user32.dll")]
-static extern bool SetForegroundWindow(IntPtr hWnd);
+static extern nint GetForegroundWindow();
 
 [DllImport("user32.dll")]
-static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+static extern bool SetForegroundWindow(nint hWnd);
+
+[DllImport("user32.dll")]
+static extern bool ShowWindow(nint hWnd, int nCmdShow);
+
